@@ -1,17 +1,19 @@
 #include "grayscale.hpp"
+#include <highgui.h>
 
-using namespace cv;
+
+using namespace CV;
 
 #define R_COEFF 0.2126
 #define G_COEFF 0.7152
 #define B_COEFF 0.0722
 
-inline uchar bgrToGray(const uchar* bgrPixel){
+inline unsigned char bgrToGray(const unsigned char* bgrPixel){
     double b = (double)bgrPixel[0];
     double g = (double)bgrPixel[1];
     double r = (double)bgrPixel[2];
 
-    return (uchar)(B_COEFF * b + G_COEFF * g + R_COEFF * r);
+    return (unsigned char)(B_COEFF * b + G_COEFF * g + R_COEFF * r);
 }
 
 void to_442grayscale(Mat &input, Mat &output){
@@ -28,8 +30,8 @@ void to_442grayscale(Mat &input, Mat &output){
     }
 
     for(int i = 0; i < nRows; i++){
-        uchar *inputRow_p = input.ptr(i);
-        uchar *outputRow_p = output.ptr(i);
+        unsigned char *inputRow_p = input.ptr(i);
+        unsigned char *outputRow_p = output.ptr(i);
         for(int j = 0; j < nCols; j++){
             outputRow_p[j] = bgrToGray(&(inputRow_p[j * channels]));
         }
