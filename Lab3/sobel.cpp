@@ -7,7 +7,7 @@ const int verticalFilter[3][3] = {{-1, 0, 1}, {-2, 0, 2}, {-1, 0, 1}};
 
 const int horizontalFilter[3][3] = {{-1, -2, -1}, { 0,  0,  0}, { 1,  2,  1}};
 
-void sobel(Mat &input, Mat &output) {
+void to442_sobel(Mat &input, Mat &output) {
     CV_Assert(input.type() == CV_8UC1);
 
     int nRows = input.rows;

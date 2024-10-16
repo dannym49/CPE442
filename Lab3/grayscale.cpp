@@ -1,8 +1,8 @@
 #include "grayscale.hpp"
-#include <highgui.h>
+//#include <highgui.h>
 
 
-using namespace CV;
+using namespace cv;
 
 #define R_COEFF 0.2126
 #define G_COEFF 0.7152
@@ -16,12 +16,12 @@ inline unsigned char bgrToGray(const unsigned char* bgrPixel){
     return (unsigned char)(B_COEFF * b + G_COEFF * g + R_COEFF * r);
 }
 
-void to_442grayscale(Mat &input, Mat &output){
+void to442_grayscale(Mat &input, Mat &output){
     CV_Assert(input.type() == CV_8UC3);
 
     int channels = input.channels();
     int nRows = input.rows;
-    int ncols = input.cols;
+    int nCols = input.cols;
     output.create(nRows, nCols, CV_8UC1);
 
     if (input.isContinuous() && output.isContinuous()){

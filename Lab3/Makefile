@@ -1,30 +1,32 @@
-#Compiler
-CC = g++ 
+# Compiler
+CC = g++
 
-#Output file
-OUT = main.out 
+# Output binary name
+OUT = main.out
 
-#Linker flags
-LDFLAGS = -g 'pkg-config --cflags opencv4'
+# Compiler flags for warnings and debugging, explicitly add the OpenCV include path
+CFLAGS = -Werror -g -I/usr/include/opencv4 `pkg-config --cflags opencv4`
 
-#Compiler Flags
-CFLAGS = -Werror -g 'pkg-config --cflags opencv4'
+# Linker flags to link OpenCV libraries
+LDFLAGS = `pkg-config --libs opencv4`
 
-#Header Files
-DEPS = grayscale.hpp sobel.hpp
-
-#Source Files
+# Source files
 SRCS = grayscale.cpp sobel.cpp main.cpp
 
-OBJS = $(SRCS:.cpp=-o)
+# Object files (replace .cpp with .o)
+OBJS = $(SRCS:.cpp=.o)
 
-#Default target
-all: ${OUT}
+# Target to build everything
+all: $(OUT)
 
-#Rule to compile .cpp files to .o object files
-%.o: %.cpp ${DEPS}
-	${CC} -c ${CFLAGS} $< -o $@
+# Rule to build the final executable
+$(OUT): $(OBJS)
+	$(CC) $(OBJS) $(LDFLAGS) -o $(OUT)
 
-#Clean up the build
+# Rule to compile the source files into object files
+%.o: %.cpp
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean rule to remove generated files
 clean:
-		rm -f ${OUT}
+	rm -f $(OBJS) $(OUT)

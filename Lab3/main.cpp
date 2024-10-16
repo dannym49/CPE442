@@ -1,8 +1,5 @@
-
 #include <iostream>
-#include <opencv2/core.hpp>
-#include <opencv2/videoio.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/opencv.hpp>
 
 #include "grayscale.hpp"
 #include "sobel.hpp"
@@ -10,21 +7,18 @@
 using namespace cv;
 
 int main(int argc, char *argv[]) {
+    // Check if the number of arguments is exactly 2
+    if (argc != 2) {
+        std::cerr << "Error: Insufficient arguments." << std::endl;
+        std::cout << "Usage: sobel [videofile]" << std::endl;
+        return -1;
+    }
+
     VideoCapture cap;
 
-    // Open camera or video file based on user input
-    if (argc == 1) {
-        if (!cap.open(0)) {
-            std::cerr << "Error: Could not open camera." << std::endl;
-            return -1;
-        }
-    } else if (argc == 2) {
-        if (!cap.open(argv[1])) {
-            std::cerr << "Could not open " << argv[1] << std::endl;
-            return -1;
-        }
-    } else {
-        std::cout << "Usage: sobel [videofile]" << std::endl;
+    // Try to open the video file provided as the first argument
+    if (!cap.open(argv[1])) {
+        std::cerr << "Could not open " << argv[1] << std::endl;
         return -1;
     }
 
@@ -33,6 +27,14 @@ int main(int argc, char *argv[]) {
         std::cerr << "Error: Could not open video capture." << std::endl;
         return -1;
     }
+
+    // Define the desired window size
+    const int windowWidth = 800; // Set your desired width
+    const int windowHeight = 600; // Set your desired height
+
+    // Create a window with the desired size
+    namedWindow("Processed Video", WINDOW_NORMAL);
+    resizeWindow("Processed Video", windowWidth, windowHeight);
 
     while (true) {
         Mat frame, grayscale, edges;
@@ -43,13 +45,11 @@ int main(int argc, char *argv[]) {
             break;
 
         // Convert to grayscale and apply Sobel filter
-        toGrayscale(frame, grayscale);
-        sobel(grayscale, edges);
+        to442_grayscale(frame, grayscale);
+        to442_sobel(grayscale, edges);
 
-        // Display the original frame, grayscale frame, and edges
-        imshow("Video", frame);
-        imshow("Video Grayscale", grayscale);
-        imshow("Video Edges", edges);
+        // Display the final processed frame with Sobel applied
+        imshow("Processed Video", edges);
 
         // Exit if the user presses the 'q' key
         if (waitKey(1) == 'q') {
