@@ -19,7 +19,7 @@ void to442_sobel(Mat &input, Mat &output) {
             int vGradient = 0;
             int hGradient = 0;
 
-            // Calculate gradients using the Sobel filters
+            //Calculate gradients using the Sobel filters
             for (int m = -1; m <= 1; m++) {
                 for (int n = -1; n <= 1; n++) {
                     uchar pixelValue = input.at<uchar>(i + m, j + n);
@@ -28,7 +28,7 @@ void to442_sobel(Mat &input, Mat &output) {
                 }
             }
 
-            // Calculate the magnitude of the gradient
+            //Calculate the magnitude of the gradient
             int sum = std::min(255, std::abs(vGradient) + std::abs(hGradient));
             output.at<uchar>(i - 1, j - 1) = static_cast<uchar>(sum);
         }

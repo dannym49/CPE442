@@ -1,13 +1,15 @@
 #include "grayscale.hpp"
-//#include <highgui.h>
 
 
 using namespace cv;
 
+
+//Coefficients for converting BGR to grayscale using the formula
 #define R_COEFF 0.2126
 #define G_COEFF 0.7152
 #define B_COEFF 0.0722
 
+//Function to convert a single BGR pixel to grayscale
 inline unsigned char bgrToGray(const unsigned char* bgrPixel){
     double b = (double)bgrPixel[0];
     double g = (double)bgrPixel[1];
@@ -16,6 +18,7 @@ inline unsigned char bgrToGray(const unsigned char* bgrPixel){
     return (unsigned char)(B_COEFF * b + G_COEFF * g + R_COEFF * r);
 }
 
+//Function to convert a BGR image to a grayscale image
 void to442_grayscale(Mat &input, Mat &output){
     CV_Assert(input.type() == CV_8UC3);
 
@@ -29,6 +32,7 @@ void to442_grayscale(Mat &input, Mat &output){
         nRows = 1;
     }
 
+    //Process each pixel
     for(int i = 0; i < nRows; i++){
         unsigned char *inputRow_p = input.ptr(i);
         unsigned char *outputRow_p = output.ptr(i);
