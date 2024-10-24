@@ -58,7 +58,7 @@ void* applyFilters(void* args) {
     }
 
     //Apply Sobel to the section
-    for (int i = startRow + 1; i < endRow - 1; i++) { // Padding
+    for (int i = startRow + 1; i < endRow - 1; i++) { //Padding
         for (int j = startCol + 1; j < endCol - 1; j++) {
             int vGradient = 0;
             int hGradient = 0;
@@ -85,26 +85,33 @@ void processFrame(Mat &input, Mat &grayOutput, Mat &sobelOutput) {
     pthread_t threads[4];
     ThreadArgs threadArgs[4];
 
-    int rowsPerSection = input.rows / 4; // Divide rows into 4 sections
+    int rowsPerSection = input.rows / 4; //Divide rows into 4 sections
 
-    // Create 4 threads for each horizontal section
+    //Create 4 threads for each section
     for (int i = 0; i < 4; i++) {
         threadArgs[i].input = &input;
         threadArgs[i].grayOutput = &grayOutput;
         threadArgs[i].sobelOutput = &sobelOutput;
 
-        threadArgs[i].startRow = i * rowsPerSection; // Start row for the section
-        threadArgs[i].endRow = (i == 3) ? input.rows : (i + 1) * rowsPerSection; // Handle last section correctly
+        threadArgs[i].startRow = i * rowsPerSection; //Start row for the section
+        
+        //Handle last section correctly using if-else
+        if (i == 3) {
+            threadArgs[i].endRow = input.rows;
+        } else {
+            threadArgs[i].endRow = (i + 1) * rowsPerSection;
+        }
 
-        threadArgs[i].startCol = 0; // All sections cover the full width
-        threadArgs[i].endCol = input.cols; // All sections cover the full width
+        threadArgs[i].startCol = 0; //Set starting cols to column 0
+        threadArgs[i].endCol = input.cols; //Sets the ending column
 
         pthread_create(&threads[i], nullptr, applyFilters, &threadArgs[i]);
     }
 
-    // Join the threads to wait for processing to complete
+    //Stitch the threads back together
     for (int i = 0; i < 4; i++) {
         pthread_join(threads[i], nullptr);
     }
 }
+
 
