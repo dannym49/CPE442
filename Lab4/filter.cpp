@@ -37,7 +37,7 @@ inline unsigned char bgrToGray(const unsigned char* bgrPixel) {
     return (unsigned char)(B_COEFF * b + G_COEFF * g + R_COEFF * r);
 }
 
-//Function that each thread will execute: applies grayscale and Sobel to one quadrant
+//Function that each thread will execute, applies grayscale and Sobel to a section
 void* applyFilters(void* args) {
     ThreadArgs* threadArgs = (ThreadArgs*) args;
     int startRow = threadArgs->startRow;
