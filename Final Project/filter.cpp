@@ -1,6 +1,6 @@
 #include "filter.hpp"
 #include <opencv2/opencv.hpp>
-#include <pthread.h>
+#include <omp.h>
 #include <arm_neon.h>
 
 using namespace cv;
@@ -22,23 +22,15 @@ int horizontalFilter[3][3] = {
     {-1, -2, -1}
 };
 
-//Thread argument structure
-struct ThreadArgs {
-    int startRow, endRow, startCol, endCol;
-    Mat *input;
-    Mat *grayOutput;
-    Mat *sobelOutput;
-};
-
 //Function to convert BGR to grayscale using NEON intrinsics
-void neonGrayscale(const Mat& input, Mat& grayOutput, int startRow, int endRow) {
+inline void neonGrayscale(const Mat& input, Mat& grayOutput, int startRow, int endRow) {
     const int width = input.cols * 3;  //Account for BGR channels
     
     for (int i = startRow; i < endRow; i++) {
         const uint8_t* inputRow = input.ptr<uint8_t>(i);
         uint8_t* outputRow = grayOutput.ptr<uint8_t>(i);
 
-        for (int j = 0; j < width; j += 24) {  //Process 8 pixelst a time
+        for (int j = 0; j < width; j += 24) {  //Process 8 pixels at a time
             uint8x8x3_t bgr = vld3_u8(inputRow + j);  //Load 8 BGR pixels
             
             //Convert to uint16 for calculations
@@ -61,7 +53,7 @@ void neonGrayscale(const Mat& input, Mat& grayOutput, int startRow, int endRow) 
 }
 
 //Function to apply Sobel filter using NEON intrinsics
-void neonSobel(const cv::Mat& grayOutput, cv::Mat& sobelOutput, int startRow, int endRow) {
+inline void neonSobel(const cv::Mat& grayOutput, cv::Mat& sobelOutput, int startRow, int endRow) {
     for (int i = startRow + 1; i < endRow - 1; i++) {  //Padding
         unsigned char* sobelRow = sobelOutput.ptr<unsigned char>(i - 1);
 
@@ -78,7 +70,7 @@ void neonSobel(const cv::Mat& grayOutput, cv::Mat& sobelOutput, int startRow, in
                 uint8x8_t pixels_u8_1 = vld1_u8(&rowPtr[j]);
                 uint8x8_t pixels_u8_2 = vld1_u8(&rowPtr[j + 1]);
 
-                //Convert to signed 16 bit integers
+                //Convert to signed 16-bit integers
                 int16x8_t pixels_0 = vreinterpretq_s16_u16(vmovl_u8(pixels_u8_0));
                 int16x8_t pixels_1 = vreinterpretq_s16_u16(vmovl_u8(pixels_u8_1));
                 int16x8_t pixels_2 = vreinterpretq_s16_u16(vmovl_u8(pixels_u8_2));
@@ -123,43 +115,17 @@ void neonSobel(const cv::Mat& grayOutput, cv::Mat& sobelOutput, int startRow, in
     }
 }
 
-//Function to apply grayscale and sobel to section
-void* applyFilters(void* args) {
-    ThreadArgs* threadArgs = (ThreadArgs*) args;
-    int startRow = threadArgs->startRow;
-    int endRow = threadArgs->endRow;
-    Mat *input = threadArgs->input;
-    Mat *grayOutput = threadArgs->grayOutput;
-    Mat *sobelOutput = threadArgs->sobelOutput;
-
-    //Apply grayscale 
-    neonGrayscale(*input, *grayOutput, startRow, endRow);
-
-    //Apply Sobel filter 
-    neonSobel(*grayOutput, *sobelOutput, startRow, endRow);
-
-    return nullptr;
-}
-
-//Main processing function to create threads and apply filters
+//Main processing function to apply grayscale and sobel using OpenMP
 void processFrame(Mat &input, Mat &grayOutput, Mat &sobelOutput) {
-    pthread_t threads[4];
-    ThreadArgs threadArgs[4];
-
-    int rowsPerSection = input.rows / 4;
-
+    #pragma omp parallel for
     for (int i = 0; i < 4; i++) {
-        threadArgs[i].input = &input;
-        threadArgs[i].grayOutput = &grayOutput;
-        threadArgs[i].sobelOutput = &sobelOutput;
+        int startRow = i * (input.rows / 4);
+        int endRow = (i == 3) ? input.rows : (i + 1) * (input.rows / 4);
 
-        threadArgs[i].startRow = i * rowsPerSection;
-        threadArgs[i].endRow = (i == 3) ? input.rows : (i + 1) * rowsPerSection;
+        //Apply grayscale
+        neonGrayscale(input, grayOutput, startRow, endRow);
 
-        pthread_create(&threads[i], nullptr, applyFilters, &threadArgs[i]);
-    }
-
-    for (int i = 0; i < 4; i++) {
-        pthread_join(threads[i], nullptr);
+        //Apply Sobel filter
+        neonSobel(grayOutput, sobelOutput, startRow, endRow);
     }
 }
