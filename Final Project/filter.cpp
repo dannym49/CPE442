@@ -46,13 +46,13 @@ inline void neonGrayscale(const Mat& input, Mat& grayOutput, int startRow, int e
             //Shift right by 8 to return to 8-bit range 
             uint8x8_t gray8 = vshrn_n_u16(gray16, 8);
 
-            //Store the grayscale pixels
+            //Store grayscale pixels
             vst1_u8(outputRow + j / 3, gray8);
         }
     }
 }
 
-//Function to apply Sobel filter using NEON intrinsics
+//Function to apply sobel filter using NEON intrinsics
 inline void neonSobel(const cv::Mat& grayOutput, cv::Mat& sobelOutput, int startRow, int endRow) {
     for (int i = startRow + 1; i < endRow - 1; i++) {  //Padding
         unsigned char* sobelRow = sobelOutput.ptr<unsigned char>(i - 1);
@@ -115,17 +115,24 @@ inline void neonSobel(const cv::Mat& grayOutput, cv::Mat& sobelOutput, int start
     }
 }
 
-//Main processing function to apply grayscale and sobel using OpenMP
+
 void processFrame(Mat &input, Mat &grayOutput, Mat &sobelOutput) {
+    int totalThreads = 4;
+    int rowsPerThread = input.rows / totalThreads;
+
     #pragma omp parallel for
-    for (int i = 0; i < 4; i++) {
-        int startRow = i * (input.rows / 4);
-        int endRow = (i == 3) ? input.rows : (i + 1) * (input.rows / 4);
+    for (int i = 0; i < totalThreads; i++) {
+        //Calculate start and end rows with overlap for sobel processing
+        int startRow = i * rowsPerThread;
+        int endRow = (i + 1) * rowsPerThread;
 
-        //Apply grayscale
-        neonGrayscale(input, grayOutput, startRow, endRow);
+        //Include overlap rows for sobel 
+        if (i > 0) startRow -= 1; //Include previous row for overlap
+        if (i < totalThreads - 1) endRow += 1; //Include next row for overlap
 
-        //Apply Sobel filter
-        neonSobel(grayOutput, sobelOutput, startRow, endRow);
+        neonGrayscale(input, grayOutput, startRow, endRow);//Apply grayscale
+        neonSobel(grayOutput, sobelOutput, startRow, endRow);//Apply Sobel 
     }
 }
+
+

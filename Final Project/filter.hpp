@@ -30,4 +30,4 @@ void processFrame(Mat &input, Mat &grayOutput, Mat &sobelOutput);
 
 #endif // FILTER_HPP
 
-//g++ main.cpp filter.cpp -o main $(pkg-config --cflags --libs opencv4) -pthread -mcpu=cortex-a72 -std=c++11 -O0
+//g++ main.cpp filter.cpp -o main $(pkg-config --cflags --libs opencv4) -mcpu=cortex-a72 -std=c++11 -O3 -fopenmp
